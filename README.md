@@ -1,180 +1,46 @@
-# Phase 3 Project
+# Modelling Customer Churn for SyriaTel
+
+## Introduction
+We are tasked with constructing a model that will best predict customer churn for SyriaTel, a telecommunications company. 
+
+## Objectives
+- Construct a classification model
+- Explore trends on customer data
+- Provide recommendations to SyriaTel for improving customer retention
+
+## Data
+Data is split into three types:
+- Customer Data
+- Usage Data
+- Plan Data
+
+## Models
+We fitted two types of models: Logistic Classification and Random Forest Classification.
+- Logistic Regression did not perform well, falling well below any acceptable score. 
+- Random Forest classification performed the best when location features were not taken into account. 
+
+## Findings
+### Optimal Model:
+We found that a Random Forest model, optimized through a GridSearch, performed best when ignoring location data. Our initial fit showed that the feature importances of location data was extremely small compared to other features. 
+### Customer Trends
+We found that customers are satisfied with the voicemail plan, while dissatisfied with the international plan. We also found that location does not contribute to churn, and that customers who pay more on average do not have other identifying factors. 
+### How to Improve Retention
+#### 1. Investigate how our International Plan can be improved. 
+* We found that of customers enrolled in the International Plan, 42% decided to leave SyriaTel. This suggests that customers are very displeased with our international service. 
+* We also found that international service subscribers pay roughly the same amount for international calls than their non-enrolled counterparts. Giving these subscribers a greater discount on international calls may improve our international plan performance, contributing to greater customer retention. 
 
 
-## Project Overview
-
-In this project, I chosen [SyriaTel Customer Churn](https://www.kaggle.com/becksddf/churn-in-telecoms-dataset) to solve a binary classification problem. 
-
-Based on the classification results and features analysis, some suggestions regarding specific aspects of the customers will be given to decease the churn rate 
-
-## Business Problem
-
-* Q: Who are the stakeholders in this project? Who will be directly affected by the creation of this project?
-* A: The stakeholder is the SyriaTel, a telecommunications company. 
-* Q: What business problem(s) will this Data Science project solve for the organization?
-* A: 1) Who will be stick on the company and who will stop doing business with the company based on data analysis
-       and classification models performed.
-     2) Based on identified patterns, suggestions in different aspects could be given to the company for keeping 
-        the customers stick on the company
-
-
-### The Data
-
-The data is [SyriaTel Customer Churn](https://www.kaggle.com/becksddf/churn-in-telecoms-dataset) with the file bigml_59c28831336c6604c800002a.csv, which has been saved in the folder: /data/
-
-
-### Methods
-
-#### First, I loaded data to check the potential features, and found:
-
-1) There are 20 features and one target, i.e., churn, and no missing data from all columns
-2) A total of 3333 entries
-3) Data types of several columns need to be changed 
-
-#### Second, I prepared the data:
-
-1) the column names: replace ' ' with '_'
-2) the column 'phone number': drop it since it generally does not affect the customer churn
-3) the column 'international_plan' and 'voice_mail_plan': replace 'yes' and 'no' with 1 and 0
-4) the target column 'churn': convert boolean into int, and I also found the target is imbalanced: 0-2850 entries,1-483 entries
-
-#### Third, I examined the features one-by-one:
-
-1) 'account_length': a normal distribution and in the unit of day 
-
-![figure of accountlenhist](figures/accountlen_hist.png)
-
-2) 'area_code': the churn rates are similar across three unique area codes, therefore, this feature can be excluded from classification
-
-3) 'state': different states have different churn rate, CA and NJ are the two highest churn rate states > 25%,
- while AK and HI are the two lowest churn rate states < 6%
-
-![figure of churnrate_states](figures/churnrate_states.png)
-
-4) 'international_plan' and 'voice_mail_plan': the customers with international plan but without voice mail plan have higher churn rate
-
-![figure of churnrate_intervoiceplans](figures/churnrate_intervoiceplans.png)
-
-5) 'number_vmail_messages': This feature seems not well sampled, since there are too many customers in the survey has 0 number of voice messages. Meanwhile, this feature also have some relationship with the churn rate
-
-![figure of churnrate_numvmailmges](figures/churnrate_numvmailmges.png)
-
-6) 'customer_service_calls': the customers with number of service calls as 4,5,6 have larger churn rate, while less than 4 are likely to drop
-![figure of churnrate_numvmailmges](figures/churnrate_custsercalls.png)
-
-7) The remaining features related to calls and charges within four different categories: day, eve, night, intl, might have high correlation. I found the minutes and charge in each category has close to 1 correlation.so I will drop the columns of charge in the following classification models
-
-
-### Modeling
-
-#### Prepare train and test data
-
-After examining all features, I prepare the train and test data:
-- The target is the churn column
-- The features are all columns after excluding   churn','area_code','total_day_charge','total_eve_charge','total_night_charge','total_intl_charge'
-- For 'state', I will do oneHotEncoder for both X_train and X_test
-- Split data into train and test part
-- Since churn== 1 is signficantly smaller than churn==0,i.e., 358 vs. 2141, I will use SMOTE oversampling
-
-#### Build a baseline model using decision tree
-
-The performance of the baseline model is: 
-      - confusion matrix: 
-         [[1997  144]
-         [  78  280]]
-      - accuracy_score:  0.911
-      - f1_score:  0.716
-      - recall_score:  0.782
-      not bad
-      
-The importance of each feature is shown in the following figure: three features are the most important ones
-- customer_service_calls
-- total_day_minutes
-- international_plan
-
-![figure of dtbasic_feat_import](figures/dtbasic_feat_import.png)
-
-take a look total_day_minutes: total day minutes > 315.6, churn rate is 100%, and total day minutes < 46.5, churn rate is mostly 0
-
-![figure of churnrate_totaldaymin](figures/churnrate_totaldaymin.png)
-
-
-#### Classification Model Comparisons using different classifiers
-- DecisonTreeClassifier
-- KNeighborsClassifier
-- RandomForestClassifier
-- AdaBoostClassifier
-- GradientBoostingClassifier
-
-the performance is shown as:
-
-![figure of clsmodelscmp](figures/clsmodelscmp.PNG)
-
-The GradientBoostingClassifier achieves the best results, So I will use this model in the following analysis
-
-Based on its intial parameters, I used gridsearch to find the optimal parameters
-
-param_grid = {
-    "loss":["exponential", "deviance"],
-    "learning_rate": [0.01,0.1,0.2],
-    "min_samples_split": [2,5],
-    "min_samples_leaf":[1,2,5],
-    'max_depth':[3,5]
-    }
-    
-And the obtained best parameters are:
-{'learning_rate': 0.1, 'loss': 'deviance', 'max_depth': 5, 'min_samples_leaf': 1, 'min_samples_split': 2} 
-
-and achieved the results as:
-
-GradientBoostingClassifier final:
-confusion matrix: 
- [[2135    6]
- [  40  318]]
-accuracy_score:  0.982
-recall_score:  0.888
-f1_score:  0.933
-
-
-This result is pretty good, so I will use it as the final model to do the test.
-
-#### Final model with GradientBoostingClassifier
-
-- Parameters:
--loss = 'deviance'
--learning_rate = 0.1
--min_samples_leaf = 1
--min_samples_split = 2
--max_depth = 5
--SMOTE balancing
--StandardScaler
-
-The performance on training and test data are:
-
-Final model for train data:
-accuracy_score:  0.98
-recall_score:  0.88
-f1_score:  0.926
-
-![figure of confmat_train](figures/clffinal_confmattrain.png)
-
-Final model for test data:
-accuracy_score:  0.944
-recall_score:  0.736
-f1_score:  0.797
-
-![figure of confmat_test](figures/clffinal_confmattest.png)
-
-and the feature importance for the final model is
-
-![figure of clsfinal_featimport](figures/clffinal_feat_import.png)
-
-
-## Summary
-
-From the classification models, I found that three features affected the customer churn rate most significantly:
-- customer_service_calls: The customers with large number of service calls as 4,5,6 seems have the larger churn rate
-- international_plan: The customers with international plan have the higher churn rate
-- total_day_minutes: The customers with the total day minutes > 315.6, churn rate is 100%, and total day minutes < 46.5, churn rate is mostly 0, therefore, the company need to deal with the customers with the total day minutes     between 46.5 to 316 mins
-
-Regarding states: AZ, AK and HI have the lowest churn rate states, therefore, need to pay more attention on customers from these states
+#### 2. Continue attempting campaigns!
+* We found that a promotional campaign was underway during the time period our data was collected on. This was inferred based on the bimodal distribution of churned customers' total charges, and the slightly right skewed distribution of account length. The relationship between these two predictors suggests that the campaign was for new customers who enjoyed a discount for an introductory period. 
+* While this campaign contributes to churn once this intro period is over, it is better to "take two steps forward and one step back" in this scenario. 
+* Some campaigns to consider, based upon feature importance of our final model:
+    - Offer at-risk customers a **trial voicemail plan**. From our EDA, customers are much less likely to churn if they are subscribed in this plan. 
+    - Offer at-risk customers a **discount on their monthly charge**. While this is somewhat obvious, total charge was the single greatest feature in our final model and should not be understated. 
+    - Offer **loyalty rewards** to customers with history with SyriaTel. This will help protect SyriaTel from campaigns of competing companies who may be offering our customers introductory offers (as we should be doing to their customers as well!)
+#### 3. Improve our Customer Service Experience
+- We found that the number of customer service calls a subsciber has to make is the second greatest feature in importance. While it is more difficult to make a customer happier with their monthly bill without taking a direct hit to profits, improving a customer's experience with our staff is not difficult to imnprove. We can accomplish this by:
+    - Prioritizing the minimization of customer service calls through agent responsibility. Any customer that needs to call more than 5 times in one single cycle is not having their needs met by our service agents. These situations must be addressed sooner before our customer decides to leave on the basis of bad customer service. 
+    - Providing alternatives to our customers to manage their accounts. We can add mobile, online, or automated phone accessibility quite easily, and the more self-service a customer can accomplish will decrease the burden upon our service agents as well as the need for their expert assistance. 
+### Futher Investigations
+Once SyriaTel is finished formulating and putting a campaign forth, we will need to complete futher investigations to measure the efficacy of these campaigns and of our constructed model. 
+### Repo Structure
